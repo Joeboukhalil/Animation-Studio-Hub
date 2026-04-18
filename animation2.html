@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>2 Character Scene Builder</title>
+
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial;
+    background: black;
+    touch-action: none;
+}
+
+#controls {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background: rgba(0,0,0,0.9);
+    padding: 10px;
+    text-align: center;
+    color: white;
+    z-index: 1000;
+    font-size: 12px;
+}
+
+#canvasContainer {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - 140px);
+    overflow: hidden;
+}
+
+#bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* CHARACTERS */
+.character {
+    position: absolute;
+    width: 260px;
+    cursor: grab;
+    user-select: none;
+}
+
+#char1 {
+    left: 120px;
+    top: 200px;
+}
+
+#char2 {
+    left: 400px;
+    top: 200px;
+}
+
+#info {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: rgba(0,0,0,0.9);
+    padding: 10px;
+    color: white;
+    font-size: 13px;
+    text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<div id="controls">
+    Background:
+    <input type="file" id="bgUpload">
+
+    Char 1:
+    <input type="file" id="char1Upload">
+
+    Char 2:
+    <input type="file" id="char2Upload">
+
+    <button onclick="downloadScene()">Download</button>
+</div>
+
+<div id="canvasContainer">
+    <img id="bg">
+
+    <img id="char1" class="character">
+    <img id="char2" class="character">
+</div>
+
+<div id="info">
+    Upload background + 2 characters.<br>
+    Drag both characters freely on screen.<br>
+    Click Download to save the scene.
+</div>
+
+<script>
+const container = document.getElementById("canvasContainer");
+const bg = document.getElementById("bg");
+
+const char1 = document.getElementById("char1");
+const char2 = document.getElementById("char2");
+
+/* =====================
+   UPLOADS
+===================== */
+bgUpload.onchange = e => {
+    const file = e.target.files[0];
+    if (file) bg.src = URL.createObjectURL(file);
+};
+
+char1Upload.onchange = e => {
+    const file = e.target.files[0];
+    if (file) char1.src = URL.createObjectURL(file);
+};
+
+char2Upload.onchange = e => {
+    const file = e.target.files[0];
+    if (file) char2.src = URL.createObjectURL(file);
+};
+
+/* =====================
+   DRAG SYSTEM (MULTI)
+===================== */
+function makeDraggable(el) {
+    let dragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    function getEvent(e) {
+        return e.touches ? e.touches[0] : e;
+    }
+
+    el.addEventListener("mousedown", start);
+    el.addEventListener("touchstart", start, { passive: false });
+
+    function start(e) {
+        e.preventDefault();
+        dragging = true;
+
+        const ev = getEvent(e);
+        const rect = el.getBoundingClientRect();
+
+        offsetX = ev.clientX - rect.left;
+        offsetY = ev.clientY - rect.top;
+    }
+
+    document.addEventListener("mousemove", move);
+    document.addEventListener("touchmove", move, { passive: false });
+
+    function move(e) {
+        if (!dragging) return;
+        e.preventDefault();
+
+        const ev = getEvent(e);
+        const rect = container.getBoundingClientRect();
+
+        el.style.left = (ev.clientX - rect.left - offsetX) + "px";
+        el.style.top = (ev.clientY - rect.top - offsetY) + "px";
+    }
+
+    document.addEventListener("mouseup", end);
+    document.addEventListener("touchend", end);
+
+    function end() {
+        dragging = false;
+    }
+}
+
+makeDraggable(char1);
+makeDraggable(char2);
+
+/* =====================
+   SAFE DOWNLOAD (NO FREEZE)
+===================== */
+const exportCanvas = document.createElement("canvas");
+const ctx = exportCanvas.getContext("2d");
+
+function downloadScene() {
+    const rect = container.getBoundingClientRect();
+
+    exportCanvas.width = rect.width;
+    exportCanvas.height = rect.height;
+
+    ctx.clearRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+    // background
+    if (bg.src && bg.complete) {
+        ctx.drawImage(bg, 0, 0, exportCanvas.width, exportCanvas.height);
+    }
+
+    function drawChar(el, size) {
+        const r = el.getBoundingClientRect();
+
+        if (el.src && el.complete) {
+            ctx.drawImage(
+                el,
+                r.left - rect.left,
+                r.top - rect.top,
+                size,
+                size
+            );
+        }
+    }
+
+    drawChar(char1, 260);
+    drawChar(char2, 260);
+
+    exportCanvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "scene.png";
+        a.click();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, "image/png");
+}
+</script>
+
+</body>
+</html>

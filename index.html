@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Animation Studio Hub</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: radial-gradient(circle at top, #1a1a2e, #000);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* MAIN CONTAINER */
+.container {
+    text-align: center;
+    width: 90%;
+    max-width: 900px;
+}
+
+/* TITLE */
+h1 {
+    font-size: 42px;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, #00c6ff, #ff00ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* SUBTITLE */
+p {
+    opacity: 0.7;
+    margin-bottom: 40px;
+}
+
+/* CARDS */
+.cards {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.card {
+    width: 300px;
+    height: 200px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.card:hover {
+    transform: translateY(-10px) scale(1.03);
+    background: rgba(255,255,255,0.1);
+}
+
+/* ICON */
+.icon {
+    font-size: 50px;
+    margin-bottom: 10px;
+}
+
+/* TEXT */
+.card h2 {
+    margin: 0;
+}
+
+.card p {
+    font-size: 13px;
+    opacity: 0.7;
+    margin-top: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🎬 Animation Studio Hub</h1>
+    <p>Create scenes, characters, and animations easily</p>
+
+    <div class="cards">
+
+        <div class="card" onclick="openStudio('animation.html')">
+            <div class="icon">🧍</div>
+            <h2>Single Character</h2>
+            <p>Simple animation scene builder with one character</p>
+        </div>
+
+        <div class="card" onclick="openStudio('animation2.html')">
+            <div class="icon">🧍🧍</div>
+            <h2>Two Characters</h2>
+            <p>Build conversations and scenes with two characters</p>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function openStudio(page) {
+    window.location.href = page;
+}
+</script>
+
+</body>
+</html>

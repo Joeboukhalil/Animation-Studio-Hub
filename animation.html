@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scene Builder Stable</title>
+
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial;
+    background: black;
+    touch-action: none;
+}
+
+#controls {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background: rgba(0,0,0,0.9);
+    padding: 10px;
+    text-align: center;
+    color: white;
+    z-index: 1000;
+}
+
+#canvasContainer {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - 140px);
+    overflow: hidden;
+}
+
+#bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#character {
+    position: absolute;
+    width: 280px;
+    left: 150px;
+    top: 150px;
+    cursor: grab;
+    user-select: none;
+}
+
+#info {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: rgba(0,0,0,0.9);
+    padding: 10px;
+    color: white;
+    font-size: 13px;
+    text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<div id="controls">
+    Background:
+    <input type="file" id="bgUpload">
+
+    Character:
+    <input type="file" id="charUpload">
+
+    <button onclick="downloadScene()">Download</button>
+</div>
+
+<div id="canvasContainer">
+    <img id="bg">
+    <img id="character">
+</div>
+
+<div id="info">
+    Drag character anywhere. Upload images. Download scene safely (no freeze).
+</div>
+
+<script>
+const container = document.getElementById("canvasContainer");
+const character = document.getElementById("character");
+const bg = document.getElementById("bg");
+
+/* =====================
+   UPLOAD
+===================== */
+bgUpload.onchange = e => {
+    const file = e.target.files[0];
+    if (file) bg.src = URL.createObjectURL(file);
+};
+
+charUpload.onchange = e => {
+    const file = e.target.files[0];
+    if (file) character.src = URL.createObjectURL(file);
+};
+
+/* =====================
+   DRAG SYSTEM
+===================== */
+let dragging = false;
+let offsetX = 0;
+let offsetY = 0;
+
+function getTouch(e) {
+    return e.touches ? e.touches[0] : e;
+}
+
+character.addEventListener("mousedown", start);
+character.addEventListener("touchstart", start, { passive: false });
+
+function start(e) {
+    e.preventDefault();
+    dragging = true;
+
+    const ev = getTouch(e);
+    const rect = character.getBoundingClientRect();
+
+    offsetX = ev.clientX - rect.left;
+    offsetY = ev.clientY - rect.top;
+}
+
+document.addEventListener("mousemove", move);
+document.addEventListener("touchmove", move, { passive: false });
+
+function move(e) {
+    if (!dragging) return;
+    e.preventDefault();
+
+    const ev = getTouch(e);
+    const rect = container.getBoundingClientRect();
+
+    character.style.left = (ev.clientX - rect.left - offsetX) + "px";
+    character.style.top = (ev.clientY - rect.top - offsetY) + "px";
+}
+
+document.addEventListener("mouseup", end);
+document.addEventListener("touchend", end);
+
+function end() {
+    dragging = false;
+}
+
+/* =====================
+   🔥 FIXED DOWNLOAD (NO FREEZE)
+===================== */
+
+let exportCanvas = document.createElement("canvas");
+let exportCtx = exportCanvas.getContext("2d");
+
+function downloadScene() {
+    const rect = container.getBoundingClientRect();
+
+    exportCanvas.width = rect.width;
+    exportCanvas.height = rect.height;
+
+    exportCtx.clearRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+    // draw background safely
+    if (bg.src && bg.complete) {
+        exportCtx.drawImage(bg, 0, 0, exportCanvas.width, exportCanvas.height);
+    }
+
+    // get character position
+    const cRect = character.getBoundingClientRect();
+
+    // draw character safely
+    if (character.src && character.complete) {
+        exportCtx.drawImage(
+            character,
+            cRect.left - rect.left,
+            cRect.top - rect.top,
+            280,
+            280
+        );
+    }
+
+    // convert using blob (THIS FIXES FREEZE)
+    exportCanvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "scene.png";
+        a.click();
+
+        // cleanup memory (IMPORTANT)
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, "image/png");
+}
+</script>
+
+</body>
+</html>
